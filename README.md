@@ -1,6 +1,6 @@
-# code-cleanup, branch-cleanup and branch-review
+# code-care-skills
 
-Three guided, safe skills for [Claude Code](https://claude.com/claude-code), written for people who can follow commands but would rather not diagnose a broken build. Two of them clean; the third reviews. They share the same safety rules and differ in scope and in what they are allowed to touch.
+`code-cleanup`, `branch-cleanup` and `branch-review`: three guided, safe skills for [Claude Code](https://claude.com/claude-code), written for people who can follow commands but would rather not diagnose a broken build. Two of them clean; the third reviews. They share the same safety rules and differ in scope and in what they are allowed to touch.
 
 ## Which one to use
 
@@ -28,7 +28,7 @@ Plan: 6 blocks
 5. Merge two copies of the date formatter        level 2   (reviewed)
 6. Format with the project's Prettier config     level 2   (last)
 
-Level 3, report only: 2 bugs (1 high), 1 tracked .env, 1 data migration
+Level 3, report only: 2 bugs (1 important), 1 tracked .env, 1 data migration
 Apply block 1?
 ```
 
@@ -41,6 +41,7 @@ Apply block 1?
 | `code-cleanup/references/find-skills.md` | Searching the open skills registry for extra help, with permission before anything is downloaded. Read only if you ask for it |
 | `code-cleanup/references/report-template.md` | The structure of the final report |
 | `code-cleanup/scripts/skill-inventory.mjs` | Lists installed skills, subagents and plugins (marking disabled ones) and plugins available in your marketplaces, filtered and ranked by keyword. Read-only |
+| `code-cleanup/evals/` | Three test cases: stops in a folder without git, keeps what only looks unused while removing what is, leaves migrations, bugs and an old `.env` to the report |
 | `branch-cleanup/SKILL.md` | The skill: fix the scope from the branch's diff, know the checks, plan blocks, apply block by block, wrap up with a pull request section |
 | `branch-cleanup/evals/` | Three test cases, each with a script that builds a throwaway repository, a prompt and graders: stays inside the fence, stops on a dirty tree, finds an orphan built from text |
 | `branch-review/SKILL.md` | The skill: fix the scope from the branch's diff, read enough to judge, two lenses (silent failures, type design), verify every candidate, report with severities and a pull request section |
@@ -57,13 +58,13 @@ cp -r branch-cleanup ~/.claude/skills/branch-cleanup
 cp -r branch-review ~/.claude/skills/branch-review
 ```
 
-Then ask Claude to clean up a project or a folder (or run `/code-cleanup`), to tidy the branch before a pull request (or run `/branch-cleanup`), or to look for bugs in the branch before the pull request (or run `/branch-review`). The inventory script of `code-cleanup` needs Node.js; without it the skill falls back to looking at the skill folders by hand. The two branch skills need nothing but git, and their `evals/` folders are not needed to use them.
+Then ask Claude to clean up a project or a folder (or run `/code-cleanup`), to tidy the branch before a pull request (or run `/branch-cleanup`), or to look for bugs in the branch before the pull request (or run `/branch-review`). The inventory script of `code-cleanup` needs Node.js; without it the skill falls back to looking at the skill folders by hand. The two branch skills need nothing but git. None of the `evals/` folders are needed to use the skills.
 
 ## How code-cleanup works
 
 **Phase 0, safety net.** Checks the folder is a git repository (and offers to create one, with a `.gitignore` first so secrets and `node_modules` stay out), refuses to mix your uncommitted work into the cleanup, and creates a cleanup branch. Optionally it works in a git worktree, so you can keep working in your own folder meanwhile. The report lives in a `.cleanup/` folder excluded through `.git/info/exclude`, so it never reaches a commit.
 
-**Phase 1, baseline.** Finds the project's real checks and splits them into fast (unit tests, lint, types, build) and slow (end-to-end tests). Runs all of them once and records what already failed, so an old failure is never blamed on the cleanup. Warns about a development server left running, which end-to-end tests can silently test instead of the branch.
+**Phase 1, baseline.** Finds the project's real checks, in its scripts and its CI configuration, and splits them into fast (unit tests, lint, types, build) and slow (end-to-end tests). Runs all of them once and records what already failed, so an old failure is never blamed on the cleanup. Warns about a development server left running, which end-to-end tests can silently test instead of the branch.
 
 **Phase 2, inventory.** Uses the skills you already have (`/simplify`, `/code-review`, a `code-simplifier` subagent...) rather than imitating them. **Phase 3**, searching for new ones, is optional and asks before downloading anything.
 
@@ -71,13 +72,15 @@ Then ask Claude to clean up a project or a folder (or run `/code-cleanup`), to t
 
 - **Level 1, safe and mechanical:** unused imports and variables, repeated keys in an object literal. Imports with side effects, re-exports and variables holding a call are deliberately excluded.
 - **Level 2, needs judgement:** duplicate or long functions, files and dependencies that look unused, logs, commented-out code, dead CSS, unused i18n keys, outdated comments and docs, dead config options, formatting with the project's own formatter.
-- **Level 3, report only:** behaviour changes, bugs, anything touching authentication, payments or stored data (including data migrations written as code, such as Dexie's `db.version(n).upgrade(...)`), public exports, dependency upgrades, secrets. Each finding gets a severity, a fix risk and a size, and the report ends with a recommended order of separate pieces of work.
+- **Level 3, report only:** behaviour changes, bugs, anything touching authentication, payments or stored data (including data migrations written as code, such as Dexie's `db.version(n).upgrade(...)`), public exports, dependency upgrades, secrets. Each finding gets a severity (critical, important or minor, the same three levels the branch skills use), a fix risk, a size and how it was checked; a bug also needs a failure scenario and a look for the guard that would stop it, the standard `branch-review` uses. The report ends with a recommended order of separate pieces of work.
 
-Before calling anything unused, the skill looks for indirect references, above all names built from strings: `"nav" + id` uses a class called `navchallenges` that appears nowhere in the code.
+Before calling anything unused, the skill looks for indirect references, above all names built from strings: `"nav" + id` uses a class called `navchallenges` that appears nowhere in the code. It also knows the references frameworks add on their own: pytest fixtures, decorators, `import React` under the classic JSX runtime, component templates, entry points named in configuration, and files reached only by URL such as `public/` or a service worker.
 
 **Phase 5, block by block.** Explain, ask, apply, check, commit. Fast checks run on every block; slow ones only on blocks that change something visible, and all of them at the end. Blocks that change how things look need a visual comparison. Only logic blocks go through a review subagent. A failing block is undone and noted, not patched on the spot. Pre-commit hooks are never skipped.
 
-**Phase 6, wrap-up.** Runs everything once more, fills in the report with before-and-after measurements, and explains how to review, keep or discard the branch. It never merges or pushes: that is your call. If a slow check fails only at the end, one commit per block means `git bisect` can find the culprit.
+**Phase 6, wrap-up.** Runs everything once more, fills in the report with before-and-after measurements, and explains how to review, keep or discard the branch. It never merges or pushes: that is your call. If a slow check fails only at the end, one commit per block means `git bisect` can find the culprit. If `branch-review` is installed, it offers a read-only review of the cleanup branch against your starting branch, just before the formatting block when there is one, so the formatter's lines stay out of it: a cleanup should change no behaviour, so any finding points at a block to revert.
+
+Its `evals/` folder holds three cases. One runs it in a folder that is not a git repository and holds a `.env` and `node_modules/`, and checks that it stops, offers git with a `.gitignore` first, and creates nothing. One plants a side-effect import, a call assigned to an unused variable and translation keys built from text next to a really unused import and a repeated key, with tests that cover none of the traps, and checks that only the real ones go. One plants data migrations that invite a refactor, a pagination bug the tests miss and a `.env` deleted from the tree but still in the history, and checks that all three end in the report and none in the code.
 
 ## How branch-cleanup works
 
@@ -113,7 +116,9 @@ With `code-cleanup`, on a project with more than about eight blocks, the skill p
 
 ## Costs
 
-For the cleanup skills, not measured yet. The cost depends mostly on the size of the project or diff, the number of blocks and how long the test output is. `code-cleanup` itself is about 7k tokens and the files under its `references/` load only when needed. `branch-cleanup` is a single file of about 3k tokens.
+The cost depends mostly on the size of the project or diff, the number of blocks and how long the test output is. `code-cleanup` itself is about 8.5k tokens and the files under its `references/` load only when needed. `branch-cleanup` is a single file of about 3.5k tokens and has not been measured yet.
+
+`code-cleanup` was measured on its three eval cases on 2026-11-06, one run each with and without the skill on the same model, on projects of 20 to 50 lines: about 118k tokens and 3 minutes per run with the skill against 96k and under 2 minutes without, so the skill costs about 23 percent more on a small project, most of it in the work it adds (the inventory, the baseline and the report). With the skill every criterion passed (17 of 17); without it, 71 percent. The model avoided the traps of level 1 and left the migrations alone either way. What only the skill did: propose a `.gitignore` before the first commit in a folder without git, flag a `.env` deleted from the tree but still in the history, give every bug a severity and say how it was checked, and keep the report in `.cleanup/` out of git. The baseline ran with a `CLAUDE.md` that already asks for care before writing, so on a plain setup the gap is likely wider. Re-measure on a real project before trusting these figures for one.
 
 `branch-review` was measured on its three eval cases, diffs of 25 to 51 lines, one run each with and without the skill on the same model: about 104k tokens and 97 seconds per review with the skill against 98k and 91 seconds without, so the skill itself costs about 6 percent on a small diff. Without it the model found the same planted defects but rated only some of them, listed missing tests as findings, and, when asked to fix on the spot, edited the repository; with it, every finding carried a severity and a scenario and nothing was edited. The skill is about 4k tokens and `references/web-stack.md` another 2k when it applies.
 

@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: keeps-the-level-one-traps
+expected_outcome: |
+  On a new cleanup branch cut from main, the cleanup removes what is really unused (the unusedHelper import, the first of two "theme" keys in one object literal) and leaves alone what only looks unused: the import of polyfill.js that runs just by loading, the save(items) call whose result is assigned to a variable nobody reads, and the "status.open" and "status.closed" translation keys that label() reaches through a key built from text. The tests do not cover any of the traps, so only judgement keeps them. Each block is its own commit, npm test passes, main is unchanged, and nothing is merged, pushed or stashed.
+context:
+  scaffold_script: make-repo.sh

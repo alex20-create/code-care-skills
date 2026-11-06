@@ -35,6 +35,9 @@ const words = (opt("--search") ?? "")
   .split(",")
   .map((s) => s.trim().toLowerCase())
   .filter(Boolean);
+if (!words.length && args.includes("--max")) {
+  console.error("Warning: --max only applies with --search; showing everything.");
+}
 const max = words.length ? Number(opt("--max") ?? 15) || 15 : Infinity;
 const asJson = args.includes("--json");
 
@@ -66,7 +69,8 @@ function frontmatter(text) {
     const kv = /^([A-Za-z_-]+):\s*(.*)$/.exec(line);
     if (kv) {
       key = kv[1];
-      data[key] = kv[2].replace(/^["'>|-]\s*|["']$/g, "").trim();
+      // Strip quotes and YAML block indicators (">", "|", with an optional "+" or "-").
+      data[key] = kv[2].replace(/^(?:[>|][+-]?|["'])\s*|["']$/g, "").trim();
     } else if (key && /^\s+\S/.test(line)) {
       data[key] = `${data[key]} ${line.trim()}`.trim();
     }
