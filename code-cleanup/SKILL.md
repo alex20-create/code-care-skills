@@ -1,6 +1,6 @@
 ---
 name: code-cleanup
-description: Guided, safe code cleanup of a whole project or one folder (JavaScript, TypeScript, Python or other). Works on a new branch, uses the skills, plugins and subagents already installed, can search for new skills if the user wants and asks before installing any, and applies changes in blocks the user approves one at a time, checking that everything still works after each block. Use it when the user asks to clean up, tidy, sanitise or simplify the code of a project or folder, remove dead code, unused imports, debug logs or duplicates, or get a repo ready before launching or showing it, even if they never say "cleanup". For only what one branch adds use branch-cleanup; to hunt bugs in a branch, branch-review; for one function or file, just edit it. Also use for "clean up this codebase", "tidy the repo", "remove dead code", "cleanup pass", and in Spanish for "limpia el código", "ordena el repo", "quita código muerto".
+description: Guided, safe code cleanup of a whole project or one folder (JavaScript, TypeScript, Python or other). Works on a new branch, uses the skills, plugins and subagents already installed, can search for new skills if the user wants and asks before installing any, and applies changes in blocks the user approves one at a time, checking that everything still works after each block. Use it when the user asks to clean up, tidy, sanitise or simplify the code of a project or folder, remove dead code, unused imports, debug logs or duplicates, or get a repo ready before launching or showing it, even if they never say "cleanup". For only what one branch adds use branch-cleanup; to hunt bugs, project-review for the whole project or branch-review for one branch; for one function or file, just edit it. Also use for "clean up this codebase", "tidy the repo", "remove dead code", "cleanup pass", and in Spanish for "limpia el código", "ordena el repo", "quita código muerto".
 ---
 
 # Guided code cleanup
@@ -154,7 +154,7 @@ A cleanup is not a bug hunt: the bugs here are the ones met on the way. Each sti
 - **A look for the guard** upstream and downstream: a caller that checks the value, a test that pins the case, a platform that cannot produce that input. If there is one, drop the finding; if it is fragile, say so instead of presenting the bug as live.
 - **One finding per root cause:** five symptoms of one missing check are one finding with five effects.
 
-If the user wants a real hunt for bugs, that is `branch-review`, run on a branch; mention it in the report rather than turning the cleanup into one.
+If the user wants a real hunt for bugs, that is `project-review` for the whole project, or `branch-review` for one branch; mention it in the report rather than turning the cleanup into one. When both a hunt and a cleanup are wanted, the hunt goes first: its fixes are new code the cleanup should see.
 
 At the end, propose a **recommended order** in groups, each meant as separate work on its own branch, from most to least severe. In a mature project, level 3 may well be the most valuable part of the whole cleanup.
 
