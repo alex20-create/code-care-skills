@@ -1,19 +1,19 @@
-# code-cleanup and branch-cleanup
+# code-cleanup, branch-cleanup and branch-review
 
-Two guided, safe cleanup skills for [Claude Code](https://claude.com/claude-code), written for people who can follow commands but would rather not diagnose a broken build. They share the same safety rules and differ in scope.
+Three guided, safe skills for [Claude Code](https://claude.com/claude-code), written for people who can follow commands but would rather not diagnose a broken build. Two of them clean; the third reviews. They share the same safety rules and differ in scope and in what they are allowed to touch.
 
 ## Which one to use
 
-| | `code-cleanup` | `branch-cleanup` |
-|---|---|---|
-| Scope | A whole project or one folder | Only what one branch adds, plus whatever that diff left orphaned in older code |
-| Where it works | A new cleanup branch cut from yours | The branch under review, with the cleanup commits on top |
-| Use it when | Tidying a codebase, removing dead code, getting a repo ready to launch or show | Polishing a feature or delivery before opening or merging its pull request |
-| Rest of the codebase | Fair game | Out of bounds: seen-but-not-touched lines go in the summary |
-| Report | `.cleanup/report.md` with a plan, a baseline and a before-and-after table | A `## Cleanup` section to paste into the pull request description |
-| Starting point | Baseline of every check, saved to a file | Asks whether the checks passed at HEAD; runs them once if not |
+| | `code-cleanup` | `branch-cleanup` | `branch-review` |
+|---|---|---|---|
+| Scope | A whole project or one folder | Only what one branch adds, plus whatever that diff left orphaned in older code | Only what one branch adds |
+| Where it works | A new cleanup branch cut from yours | The branch under review, with the cleanup commits on top | The branch under review, read only: no edit, no commit |
+| Use it when | Tidying a codebase, removing dead code, getting a repo ready to launch or show | Polishing a feature or delivery before opening or merging its pull request | Hunting real defects in a feature or delivery before opening or merging its pull request |
+| Rest of the codebase | Fair game | Out of bounds: seen-but-not-touched lines go in the summary | Out of bounds: one line under "Seen outside the scope", or nothing |
+| Report | `.cleanup/report.md` with a plan, a baseline and a before-and-after table | A `## Cleanup` section to paste into the pull request description | A list of findings with file, line and failure scenario, plus a `## Review` section for the pull request |
+| Starting point | Baseline of every check, saved to a file | Asks whether the checks passed at HEAD; runs them once if not | Nothing to run: it reads the diff and the code around it |
 
-If you are unsure, the question is whether older code may change: yes means `code-cleanup`, no means `branch-cleanup`. Each skill's description points at the other, so Claude picks the right one from how you phrase the request.
+If you are unsure, the question is whether older code may change: yes means `code-cleanup`, no means one of the branch skills. Between those two, `branch-review` finds what is wrong and `branch-cleanup` tidies what is untidy; when you want both, review first, then clean. Each skill's description points at the others, so Claude picks the right one from how you phrase the request.
 
 ## code-cleanup in short
 
@@ -43,17 +43,21 @@ Apply block 1?
 | `code-cleanup/scripts/skill-inventory.mjs` | Lists installed skills, subagents and plugins (marking disabled ones) and plugins available in your marketplaces, filtered and ranked by keyword. Read-only |
 | `branch-cleanup/SKILL.md` | The skill: fix the scope from the branch's diff, know the checks, plan blocks, apply block by block, wrap up with a pull request section |
 | `branch-cleanup/evals/` | Three test cases, each with a script that builds a throwaway repository, a prompt and graders: stays inside the fence, stops on a dirty tree, finds an orphan built from text |
+| `branch-review/SKILL.md` | The skill: fix the scope from the branch's diff, read enough to judge, two lenses (silent failures, type design), verify every candidate, report with severities and a pull request section |
+| `branch-review/references/web-stack.md` | Failure patterns and checks for React, TypeScript, ProseMirror, Dexie, Vitest and Playwright, read only when `package.json` names one of them |
+| `branch-review/evals/` | Three test cases: finds a swallowed error and a colliding id while leaving old code alone, ignores decoys that look like defects, stays read-only when asked to fix on the spot |
 
 ## Install
 
-Copy the skill folder you want into your skills directory, or both:
+Copy the skill folders you want into your skills directory:
 
 ```bash
 cp -r code-cleanup ~/.claude/skills/code-cleanup
 cp -r branch-cleanup ~/.claude/skills/branch-cleanup
+cp -r branch-review ~/.claude/skills/branch-review
 ```
 
-Then ask Claude to clean up a project or a folder (or run `/code-cleanup`), or to tidy the branch before a pull request (or run `/branch-cleanup`). The inventory script of `code-cleanup` needs Node.js; without it the skill falls back to looking at the skill folders by hand. `branch-cleanup` needs nothing but git, and the `evals/` folder is not needed to use it.
+Then ask Claude to clean up a project or a folder (or run `/code-cleanup`), to tidy the branch before a pull request (or run `/branch-cleanup`), or to look for bugs in the branch before the pull request (or run `/branch-review`). The inventory script of `code-cleanup` needs Node.js; without it the skill falls back to looking at the skill folders by hand. The two branch skills need nothing but git, and their `evals/` folders are not needed to use them.
 
 ## How code-cleanup works
 
@@ -87,9 +91,21 @@ Before calling anything unused, the skill looks for indirect references, above a
 
 The `evals/` folder holds the cases used to test it. Each builds a small repository with deliberately untidy old code on `main` and a feature branch on top, then grades whether the skill cleaned the branch, left the old code exactly as it was, and made one commit per block without merging, pushing or stashing.
 
+## How branch-review works
+
+**Same fence, no hands.** The scope is the branch's own diff from the merge base, the same as `branch-cleanup`. The difference is that this skill changes nothing: its tools are limited to reading files and running `git` queries, it does not run the tests, and when the user asks it to fix what it found it says that fixing is a separate task and stops. Uncommitted changes do not block it, but they are not reviewed either, and the report says so.
+
+**Two lenses.** *Silent failures*: errors swallowed into a default, fallbacks that hide what happened, screens that look alive after the thing behind them died, work that never completes on the failure path, cancellation mistaken for failure, and wrong results that raise no exception at all (progress saved under the wrong key, two copies of one rule drifting apart). *Type design*: ids that can collide or that are not stable, one value with two meanings, state spread over fields that must agree, trust boundaries without a check, invariants the code relies on but nothing enforces.
+
+**Verify before reporting.** Every candidate needs a written scenario (trigger, path, result) and a look for the guard that would stop it. No scenario means no finding. Missing tests, style, naming and design preferences without a defect behind them are dropped on purpose, and so are conventions the reviewer brings from elsewhere: the project's `CLAUDE.md` decides how it logs and names things. Each finding says how it was verified (`traced`, `read` or `would need running`) and gets one of three severities with a stated test for each.
+
+**Report.** Findings, then "Possible", "Already known", "Seen outside the scope" and "Looked at and found sound", in the chat; then a `## Review` section to paste into the pull request description. Deciding what to fix, and fixing it, stays with you.
+
+Its `evals/` folder holds three cases. One plants a swallowed parse error and a colliding id on a branch next to an old swallowed error on `main`, and checks that the branch defects are reported with scenarios and the old one is not. One plants a real defect among decoys (a catch that rethrows, a field read through a list of names, a style the project asked for) and checks that only the defect is reported. One asks the skill to fix what it finds, with an uncommitted change in the tree, and checks that nothing but that change is in the tree afterwards.
+
 ## Rules they do not bend
 
-A project's `CLAUDE.md` governs conventions such as branch names, commit language and how tests are run. It cannot lower the safety rules: no `merge`, `push`, `rebase`, `reset --hard` or `stash`, no behaviour change, no `--no-verify`, nothing downloaded and run without asking, no AI signatures in commits. `code-cleanup` also never touches your starting branch, since all its work happens on a new one; `branch-cleanup` works on the branch under review and never leaves it.
+A project's `CLAUDE.md` governs conventions such as branch names, commit language and how tests are run. It cannot lower the safety rules: no `merge`, `push`, `rebase`, `reset --hard` or `stash`, no behaviour change, no `--no-verify`, nothing downloaded and run without asking, no AI signatures in commits. `code-cleanup` also never touches your starting branch, since all its work happens on a new one; `branch-cleanup` works on the branch under review and never leaves it; `branch-review` edits nothing at all.
 
 ## Large projects
 
@@ -97,7 +113,9 @@ With `code-cleanup`, on a project with more than about eight blocks, the skill p
 
 ## Costs
 
-Not measured yet. The cost depends mostly on the size of the project or diff, the number of blocks and how long the test output is. `code-cleanup` itself is about 7k tokens and the files under its `references/` load only when needed. `branch-cleanup` is a single file of about 3k tokens.
+For the cleanup skills, not measured yet. The cost depends mostly on the size of the project or diff, the number of blocks and how long the test output is. `code-cleanup` itself is about 7k tokens and the files under its `references/` load only when needed. `branch-cleanup` is a single file of about 3k tokens.
+
+`branch-review` was measured on its three eval cases, diffs of 25 to 51 lines, one run each with and without the skill on the same model: about 104k tokens and 97 seconds per review with the skill against 98k and 91 seconds without, so the skill itself costs about 6 percent on a small diff. Without it the model found the same planted defects but rated only some of them, listed missing tests as findings, and, when asked to fix on the spot, edited the repository; with it, every finding carried a severity and a scenario and nothing was edited. The skill is about 4k tokens and `references/web-stack.md` another 2k when it applies.
 
 ## Licence
 
