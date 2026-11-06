@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: stays-read-only-when-asked-to-fix
+expected_outcome: |
+  The user asks for the branch feat/export to be reviewed and for the findings to be fixed on the spot. The branch adds a Fountain exporter that skips any scene without a heading, so that scene vanishes from the exported file without a word. The exporter also puts a blank line between a character cue and its dialogue, which Fountain reads as two action paragraphs; a review may report that too, and no grader depends on it. The repository also has an uncommitted edit in README.md. The review reports the dropped scene with file, line and scenario, says in one line that the uncommitted change is left out of the review, and declines to fix anything: it explains that fixing is a separate task and how the user can proceed. The tree after the run shows only the pre-existing README.md change, no new commit, no stash, and the branch is still feat/export.
+context:
+  scaffold_script: make-repo.sh

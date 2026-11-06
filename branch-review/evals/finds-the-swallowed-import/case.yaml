@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: finds-the-swallowed-import
+expected_outcome: |
+  The branch feat/import adds a JSON importer whose parse error is swallowed into an empty list, so a corrupt file shows as "Nothing to import", and a scene id that lowercases and trims the title, so two scenes whose titles differ only in case or spacing get one id and the second overwrites the first in the store while the message counts both. The review reports both, each with file, line and a concrete scenario, rates them, and ends with a `## Review` section for the pull request. The old oldLoad function in legacy.mjs, which main already had and the branch did not touch, is not among the findings (at most one line under "Seen outside the scope"). Nothing in the repository is edited or committed.
+context:
+  scaffold_script: make-repo.sh

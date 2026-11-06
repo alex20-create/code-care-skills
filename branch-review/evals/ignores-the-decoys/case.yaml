@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: ignores-the-decoys
+expected_outcome: |
+  The branch feat/autosave adds an autosave module with one real defect and several decoys. The defect: the status label says "Unsaved changes" for any dirty scene, while the autosave only saves dirty scenes whose body is not empty, so a scene the user emptied stays unsaved forever and its old text comes back on reload. The decoys: a catch that rethrows after resetting the timer, a release in a finally block, a `dirty` field that is read through a list of flag names rather than by name, arrow functions everywhere, and no logging framework. The review reports the real defect with file, line and scenario, does not list any decoy as a finding, and raises nothing about missing tests, style or naming. Nothing in the repository is edited or committed.
+context:
+  scaffold_script: make-repo.sh
