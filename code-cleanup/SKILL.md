@@ -107,6 +107,8 @@ Go through the code and sort every finding into one of three levels. Use the pro
 
 If the project has no linter, propose a one-off pass: install the language's linter (ESLint, `ruff`...) in a temporary folder **outside the repository**, run it once over the code and leave nothing installed or added. It tends to find unused variables, duplicate keys and real bugs in one go. It needs the user's permission, because it downloads code. If it turns out useful, adding the linter to the project goes into the report as a recommendation, to be done later on its own branch, not inside the cleanup.
 
+**Start from what the project already knows.** Read its record of known issues before sorting anything: `CLAUDE.md` and what it points at, a decisions or history file, a TODO list, the "Pending" of an earlier `.cleanup/report.md`. A defect it already records is not a new finding: it goes in one line under "Already known" in the report, with where the project records it, so the user is not told again what they wrote down themselves.
+
 **Do not read whole files to search.** Locate with searches (`rg`, `git grep`), with the linter or with an exploration subagent, and read only the lines around each match. In a file thousands of lines long, reading it whole costs a lot and adds nothing.
 
 **Level 1: safe and mechanical.** Unused imports and variables, with three exceptions that move to level 2:
@@ -117,11 +119,11 @@ If the project has no linter, propose a one-off pass: install the language's lin
 Also level 1: a key repeated inside the same object or dictionary literal in JavaScript or Python code. Only the last one counts, so removing the earlier ones changes nothing. In JSON or YAML it depends on the program that reads it (some raise an error): that is level 2.
 
 **Level 2: needs judgement.**
-- Duplicate functions that can be merged, very long functions, confusing names, convoluted conditionals.
+- Duplicate functions that can be merged, very long functions, confusing names, convoluted conditionals. Confusing and convoluted by the project's conventions (documented, or followed consistently by the code around them), never by your own taste: where the project has no convention on something, it is not a finding.
 - Files that seem unused and dependencies that seem unnecessary.
 - Logs (`console.log`, `print`...): some are forgotten debugging, but others are the program's real output (a command-line tool, a server's log). Explain each case.
 - Blocks of commented-out code: they may be there on purpose (an alternative, a feature switched off for now).
-- Styles (CSS) that apply to no element. Removing them can change what is shown, so they need the visual check of Phase 5.
+- Styles (CSS) that apply to no element, because a later rule overrides them or a selector whose names do exist matches nothing. Whether they apply depends on the page, not on a search, so removing them needs the visual check of Phase 5. A definition used only by name is different: keyframes no `animation` names, a custom property no `var()` reads, a class whose name appears nowhere, not even built from text. Proved unreferenced, it is level 1, and the search is its check.
 - Translation strings (i18n keys) that no code reads. Also check whether the code builds the key's name from text.
 - Outdated comments and documentation: comments that no longer describe the code, or a `README` or `CLAUDE.md` that says something the code no longer does.
 - Configuration options that have no effect (from a tool no longer used, or ignored by the installed version).
@@ -141,6 +143,8 @@ Level 3 is not applied, but it has to be usable for fixing things later. Each fi
   - **minor:** wrong only in an edge case, or an inconsistency that will become a bug as the code grows.
 
   Two kinds of level 3 item fall outside those tests. A secret in the code or in the history is always **critical**. An item with no defect behind it (an architecture change, a dependency upgrade, code health) is **minor**.
+
+  If more than two bugs met in passing come out critical, either the project is in real trouble or the bar has slipped: say which in one sentence under the list.
 - **Fix risk:** safe, needs the tests, or needs a manual check in the app. A secret's fix risk is always "manual, outside the repository": the key is rotated where it was issued. Size and how it was checked do not apply to a secret: write "n/a" and say where it was found (file, or commit and path).
 - **Size:** XS (under 10 lines), S (10 to 40), M (40 to 150), L (over 150).
 - **File and lines, and how it was checked:** `traced` (the path was followed by reading the code end to end), `read` (the pattern is there but the trigger was not followed to a concrete input) or `would need running` (only the app can tell).
@@ -174,7 +178,7 @@ For each block, in order (when the next block is formatting, first see Phase 6, 
 4. **Check**:
    - Re-run the **fast** checks from Phase 1 and compare them with the baseline. The slow ones only if the block changes something visible (styles, text, interface components); otherwise they wait for Phase 6. A failure of a test marked flaky does not count as a new failure unless it fails twice in a row.
    - Then look at `git status --porcelain`. If the checks modified files the block does not touch again (the same ones as in the baseline), restore them **one by one by name** (`git restore -- <file>`). Never with `:/` or `.` here: the block's change is not committed yet and would be undone too.
-   - If the block removes styles or touches anything visible, the tests are not enough: they almost never check how things look. Compare the main screens before and after, with screenshots or with each element's computed styles, using the browser if the session has one. If it cannot be checked, do not apply the block: move it to level 3.
+   - If the block removes styles (other than the definitions used only by name of Phase 4) or touches anything visible, the tests are not enough: they almost never check how things look. Compare the main screens before and after, with screenshots or with each element's computed styles, using the browser if the session has one. If it cannot be checked, do not apply the block: move it to level 3.
    - Only in level 2 blocks that touch logic (merging duplicates, splitting long functions, simplifying conditionals): if a review skill or subagent was selected (`/code-review`, `code-reviewer`), give it the block's diff. If it finds a behaviour change, drop that part of the block or undo the whole block. For the other blocks (imports, logs, commented-out code, formatting) the checks are enough: a review costs time and tokens and adds nothing.
    - If a new failure appears, undo the block by naming its files: `git restore --staged --worktree -- <file> <file>…`, with the files `git status --porcelain` shows as modified by the block. Never with `.` or `:/`: they undo every change in the folder or the repository, including any the user made by hand while the cleanup ran. Delete by name only the new files that block created (never a blanket `git clean`, which could take the user's things with it). If the block touched dependencies (`package.json`, `requirements.txt`...), restoring those files does not put `node_modules` or the virtual environment back as they were: they need a reinstall with the project's package manager (`npm ci` or `npm install`, `pip install -r requirements.txt`...). A reinstall downloads packages and runs their install scripts, so name the command and wait for a yes, unless the user already approved it for this cleanup; until it runs, the checks would test the wrong dependencies, so run none. Tell the user what happened in one sentence and note it in the report. Do not try to fix it by improvising: if investigating makes sense, use `systematic-debugging`.
    - If everything is the same or better, carry on.
@@ -198,7 +202,7 @@ Between blocks, do not narrate every command. One line per finished block is eno
 3. Once no block will be reverted any more, take the Phase 1 measurements again for the report's before-and-after table. Taken earlier, a revert in step 1 or 2 would leave them describing code that is no longer there. Then complete `.cleanup/report.md` with the structure in `references/report-template.md`.
 4. Explain the user's options step by step, assuming nothing:
    - **Review** all the changes: `git diff <original-branch>...<cleanup-branch>`.
-   - **Keep the cleanup**: go back to their branch (`git switch <original-branch>`) and merge it (`git merge <cleanup-branch>`). If they work with GitHub, better to open a pull request from the branch.
+   - **Keep the cleanup**: go back to their branch (`git switch <original-branch>`) and merge it (`git merge <cleanup-branch>`). If they work with GitHub, better to open a pull request from the branch, with the report's "For the pull request" section as its description.
    - **Discard it**: go back to their branch and, if they want, delete the cleanup one (`git branch -D <cleanup-branch>`). Their original code was never touched.
    - **If a worktree was used**: also walk them through the "Wrap-up" section of `references/worktree.md` (merging from their main folder and removing the worktree without losing anything).
    - **Tidy up afterwards**: once they no longer need the report, they can delete the `.cleanup/` folder and remove its line from `.git/info/exclude`.
