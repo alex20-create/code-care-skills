@@ -1,6 +1,6 @@
 ---
 name: branch-cleanup
-description: Guided, safe cleanup of only what one branch adds — a feature, a delivery, a PR in the making — before it is merged. Its scope is the branch's own diff plus whatever that diff left orphaned in older code, and nothing else. Works on the same branch, applies changes in blocks the user approves one at a time, checks after each block and commits each one separately. Use it whenever the user wants to tidy, simplify or polish the work of the current branch, delivery or pull request before merging or opening it, especially when they do not want the rest of the codebase touched — "clean up what we just built", "tidy this branch before the PR", "simplify the new code", and in Spanish "repasa lo de esta entrega", "limpia la rama antes del PR", "deja limpio lo nuevo". For a whole project or folder use code-cleanup instead; for one function, just edit it.
+description: Guided, safe cleanup of only what one branch adds — a feature, a delivery, a PR in the making — before it is merged. Its scope is the branch's own diff plus whatever that diff left orphaned in older code, and nothing else. Works on the same branch, applies changes in blocks the user approves one at a time, checks after each block and commits each one separately. Use it whenever the user wants to tidy, simplify or polish the work of the current branch, delivery or pull request before merging or opening it, especially when they do not want the rest of the codebase touched — "clean up what we just built", "tidy this branch before the PR", "simplify the new code", and in Spanish "repasa lo de esta entrega", "limpia la rama antes del PR", "deja limpio lo nuevo". For a whole project or folder use code-cleanup instead; to hunt bugs in the branch, branch-review, run first; for one function, just edit it.
 ---
 
 # Branch cleanup
@@ -21,7 +21,7 @@ A mistake here can cost the user real work, which is why these hold even when so
 - **Do not change behaviour.** Cleaning is not adding features or fixing logic. A bug goes into the summary, not into a block.
 - **Never skip hooks.** A failing pre-commit hook is a failure of the block (step 4).
 - **No AI signatures.** No `Co-Authored-By`, "Generated with…" or any mention of AI in commits, comments or descriptions.
-- **Secrets:** do not read out or copy keys, tokens or passwords. Flag them as high priority in the summary, without the value, and leave them alone.
+- **Secrets:** do not read out or copy keys, tokens or passwords. Flag them as critical in the summary, without the value, and leave them alone.
 - **Do not hand-edit** `.env*`, credentials, lock files or data migrations, including migrations that live as code inside another file (a list of steps run when stored data is loaded, `db.version(n).upgrade(...)`). Changing them changes what happens to data the user already has.
 - **Nothing that downloads and runs code without permission** (`npx`, `pipx`, `uvx` and the like): name the package and wait for a yes.
 
@@ -56,7 +56,7 @@ Sort every finding into a level. Use the project's own linter and formatter wher
 
 **Level 1, mechanical:**
 - imports, variables and parameters the branch added and nothing uses;
-- a key repeated inside an object literal;
+- a key repeated inside an object or dictionary literal in code (in JSON or YAML it depends on the program that reads it, so that is level 2);
 - debugging output the branch added (`console.log`, `print`);
 - commented-out code the branch added;
 - orphans proved to have no references left.
@@ -72,7 +72,7 @@ Two exceptions move to level 2: imports that run something just by loading, and 
 - styles the branch added that end up never applying, because a later rule overrides them or no element matches. Removing them can change what is shown, so they need the visual check in step 4.
 
 **Level 3, summary only, never applied:**
-- behaviour changes and bugs, with severity (critical, high, medium, low), file and line, and whether it was reproduced or only read;
+- behaviour changes and bugs, each with file and line, a failure scenario (trigger, path the code takes, wrong result; without one it is only a possible issue, and says why), how it was checked (`traced` end to end, `read` without following the trigger, or `would need running`), and a severity on the same three levels as `branch-review` and `code-cleanup`: **critical** (a person loses data or the app stops working in a normal path), **important** (a wrong result or dead end a person can see, or a crash with specific but plausible data), **minor** (an edge case, or an inconsistency that will become a bug);
 - anything touching stored data, authentication or payments;
 - anything worth doing outside the scope.
 
