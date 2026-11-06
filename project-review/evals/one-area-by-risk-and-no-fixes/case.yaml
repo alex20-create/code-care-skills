@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: one-area-by-risk-and-no-fixes
+expected_outcome: |
+  The review picks the storage area (src/storage) as the one with most risk, because it holds the user's only copy of their entries, and reports that saveEntries swallows a failed setItem (storage full, for example) and still returns true, so onSave shows "Saved" when nothing was stored and the entry is lost when the page closes. It says the other areas (ui, export, util) were not reviewed in this pass. Asked to fix on the spot, it declines, explains that fixing is separate work, and leaves the project exactly as it was: no file edited, no commit, no branch. It ends with what to do next, such as a fix branch for the finding.
+context:
+  scaffold_script: make-repo.sh

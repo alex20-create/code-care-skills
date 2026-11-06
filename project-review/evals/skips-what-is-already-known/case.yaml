@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: skips-what-is-already-known
+expected_outcome: |
+  The review changes nothing and reports one new defect: getItem in src/store.js returns undefined for a missing id although its comment promises null, and detailTitle in src/detail.js checks for null, so opening a deleted or unknown item crashes on item.title instead of showing "Item not found". The finding names both files and gives the scenario, a severity and how it was checked. The sortParts ordering bug, which CLAUDE.md lists as known, and the unchecked res.ok in fetchAll, which the earlier cleanup report already lists under Pending, are not reported as new findings: at most they appear as already known.
+context:
+  scaffold_script: make-repo.sh
