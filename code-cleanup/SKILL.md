@@ -7,7 +7,7 @@ description: Guided, safe code cleanup of a whole project or one folder (JavaScr
 
 The goal is to leave the project cleaner **without changing what it does** and without the user losing anything. Whoever uses this skill may not be a seasoned programmer: they can follow commands but not diagnose a failure. That is why safety (a separate branch, one commit per block, checking after every change) matters more than speed, and every step is explained in plain language: what is about to happen, why, and how to undo it.
 
-Speak the user's language, and write the report and the baseline in it too. If it is Spanish, use European Spanish. Both files are local working notes excluded from git, so a rule that what goes into a repository is written in English does not cover them, unless a `CLAUDE.md` names them.
+Speak the user's language, and write the report and the baseline in it too. Both files are local working notes excluded from git, so a rule that what goes into a repository is written in English does not cover them, unless a `CLAUDE.md` names them.
 
 If the user only wants what one branch adds tidied, before its pull request, that is `branch-cleanup`; if they want a branch checked for bugs, that is `branch-review`. Say so in one line and let them choose before Phase 0.
 

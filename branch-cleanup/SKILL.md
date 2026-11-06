@@ -9,7 +9,7 @@ The goal is to leave what **this branch adds** cleaner, without changing what it
 
 Whoever uses this skill may not be a seasoned programmer: they can follow commands but not diagnose a failure. So safety (one commit per block, checking after every change) comes before speed, and every step is explained in plain language: what is about to happen, why, and how to undo it.
 
-Speak the user's language. If it is Spanish, use European Spanish.
+Speak the user's language.
 
 ## Rules that do not bend
 
@@ -108,7 +108,7 @@ For each block, in order:
    - Re-run the fast checks. Run the slow ones too if the block changes anything visible. Then restore by name (`git restore -- <file>`) any file the checks modified that the block does not touch, the ones noted in step 2; never with `.` or `:/`, which would undo the block too.
    - If the block touches styles or anything shown on screen, the tests are not enough: they rarely check how things look. Compare before and after, with the computed styles of the affected elements or with screenshots, using the browser if the session has one. If it cannot be checked, do not apply the block: move it to level 3. The one exception is a definition used only by name, proved to have no references left: keyframes no `animation` names, a custom property no `var()` reads, a class whose name appears nowhere, not even built from text. Removing it cannot change what is shown, so the search from step 1 is its check.
    - On a new failure, undo the block by naming its files: `git restore --staged --worktree -- <file> <file>…`. Delete by name any file the block created. Never undo with `.` or `:/`, and never `git clean`. If the block touched dependencies (`package.json`, `requirements.txt`...), restoring those files does not put `node_modules` or the virtual environment back as they were: they need a reinstall with the project's package manager (`npm ci`, `pip install -r requirements.txt`...). A reinstall downloads packages and runs their install scripts, so name the command and wait for a yes; until it runs, the checks would test the wrong dependencies, so run none. Say what happened in one sentence and note it. If investigating is worth it, use `systematic-debugging` rather than improvising.
-5. **Commit** the block alone, with `git add` of its files and a message in the project's commit style (`git log --oneline -10` shows it), for example `refactor(theme): merge the night and paper hover selectors`.
+5. **Commit** the block alone, with `git add` of its files and a message in the project's commit style (`git log --oneline -10` shows it), for example `refactor(theme): merge the dark and light hover selectors`.
    - If a hook rejects the commit and the block caused it, undo the block as above.
    - If the failure was already there, stop and ask: drop that file from the block, skip the block, or let the user decide about the hook.
 

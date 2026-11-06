@@ -8,7 +8,7 @@ allowed-tools: Read, Grep, Glob, Bash(git diff:*), Bash(git log:*), Bash(git mer
 
 The goal is to find what **this branch gets wrong** before it is merged: the places where an error disappears without a trace, where the screen keeps looking alive after something died, where two pieces of code disagree about a rule, where a type lets in a state the code cannot handle. Nothing is fixed here. The output is a short list of defects a person can act on, each with the exact place and the exact way it fails.
 
-Whoever uses this skill may not be a seasoned programmer: they can follow a finding to its line but not always tell a real bug from a reviewer's taste. So every finding has to earn its place with a scenario they could reproduce, and everything that is only an opinion stays out. Speak the user's language. If it is Spanish, use European Spanish.
+Whoever uses this skill may not be a seasoned programmer: they can follow a finding to its line but not always tell a real bug from a reviewer's taste. So every finding has to earn its place with a scenario they could reproduce, and everything that is only an opinion stays out. Speak the user's language.
 
 ## Rules that do not bend
 
