@@ -37,6 +37,7 @@ A mistake here can cost the user real work, which is why these hold even when so
    - Nothing else is in scope, not even older code in the same file right next to a change.
 6. Tell the user in two or three sentences: the branch, the base, how many files and lines are in scope, and that every block will be its own commit, so any of them can be undone with `git revert <commit>`.
 7. If the diff runs to thousands of lines, propose reviewing it file by file, across more than one session if needed.
+8. If the user also wants the branch checked for defects, that is `branch-review`, and it goes first: its findings turn into fixes, and fixes are new code that this cleanup should see. Mention it in one line and let them choose.
 
 ## 2. Know the checks
 
