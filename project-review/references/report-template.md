@@ -6,7 +6,8 @@ It is written in two moments:
 
 - **Step 1**, with the map: the summary lines, "Areas" with every area not reached, "Already known", and any secret found in the history under "Findings", as area "none".
 - **Step 4**, after each area: that area's row, its findings, possible issues, contracts and what held up.
-- **After the fixes**, if the user wants the report closed: each finding's status and the closing section. The findings themselves stay as they were written.
+- **When a fix lands**, on resuming or when the user says so: that finding's status. The finding itself stays as it was written.
+- **When the review closes**, if the user wants it closed: the closing section.
 
 ```markdown
 # Project review: <project> (<date started>)
@@ -14,7 +15,8 @@ It is written in two moments:
 ## Summary
 Folder: <path> · started at <commit> (<clean / uncommitted changes present>)
 Coverage: <N> of <M> areas reviewed · <K> stale · <J> not reached
-Findings: <critical> critical · <important> important · <minor> minor
+Findings: <critical> critical · <important> important · <minor> minor (<n> fixed)
+Cost: <pass> · estimated <lines> · read <lines> (one entry per pass, so the next estimate starts from real figures)
 
 ## Areas
 | # | Area | Paths | Lines | Why it ranks here | Status | Commit |
