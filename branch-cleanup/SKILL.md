@@ -72,6 +72,8 @@ Before calling an import, a variable or an orphan unused, rule out the reference
 - **names written as strings in configuration:** Django settings, entry points in `package.json` (`main`, `bin`, `exports`) or `pyproject.toml`, test and build configuration;
 - **files reached by URL:** the `public/` folder of Vite and similar tools, a service worker registered with a string, icons in a web app manifest, assets named in HTML.
 
+The reverse trap: a re-export in an `index` file or an `__init__.py` is not a use. Count only the files that import the name, or a barrel nobody imports keeps everything it re-exports looking alive.
+
 **Level 2, needs judgement:**
 - repetition inside the diff: the same selector list, condition or helper written twice, which can be merged (`:is()`, one function, one shared test helper);
 - names that break the project's own conventions, documented or followed consistently by the surrounding code; your own taste is not a convention, and where the project has none this item does not apply;
