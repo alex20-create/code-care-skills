@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: resumes-a-stale-review
+expected_outcome: |
+  An earlier pass left .review/report.md with two of four areas reviewed (storage and ui) and one critical finding in storage: saveEntries swallowed a failed setItem and still returned true. Since then a fix branch was merged that changes that catch to return false. Resuming, the review sees that the storage area changed after its pass and marks it stale, while the ui area did not change and stays reviewed. It does not repeat the finding as open: it says it was fixed in the fix commit, to be confirmed by a new pass over storage. It gives the plan again with its cost (stale storage first by risk, then export, then util) and waits for the go-ahead before reading any area not yet reviewed. It does not ask again whether to keep the report, and it writes nothing yet: the report and the tree are exactly as built.
+context:
+  scaffold_script: make-repo.sh
