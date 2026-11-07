@@ -14,8 +14,8 @@ It is written in two moments:
 
 ## Summary
 Folder: <path> · started at <commit> (<clean / uncommitted changes present>)
-Coverage: <N> of <M> areas reviewed · <K> stale · <J> not reached
-Findings: <critical> critical · <important> important · <minor> minor (<n> fixed)
+Coverage: <N> of <M> areas reviewed · <K> stale · <J> not reached (a stale area counts as stale, not as reviewed)
+Findings: <critical> critical · <important> important · <minor> minor (<n> fixed · <m> fixed, to be confirmed)
 Cost: <pass> · estimated <lines> · read <lines> (one entry per pass, so the next estimate starts from real figures)
 
 ## Areas
@@ -28,7 +28,7 @@ Most severe first. A finding keeps its number once given, even when a later one 
    Scenario: <trigger → path → result>
    Verified: traced | read | would need running — <what would settle it, and where: a test the project can run, or a device only the user has>
    Fix (not applied): <one line, or "none obvious">
-   Status (once fixes land): fixed in <PR or commit> | pending — <deferred, not reproducible, not worth it, undecided>
+   Status (once fixes land): fixed in <PR or commit> | fixed in <commit>, to be confirmed (until a new pass of its area confirms it) | pending — <deferred, not reproducible, not worth it, undecided>
 
 ## Possible
 - `<file>:<line>` · <what looks wrong and why it could not be pinned down>
