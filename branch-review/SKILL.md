@@ -44,6 +44,7 @@ Look for places where something goes wrong and nobody, neither the user nor the 
 - **Swallowed errors:** a catch that returns a default, an empty list or null and moves on; a promise or future whose failure has no handler; a result that is checked for success but not for failure. The failure matters when the default is indistinguishable from a legitimate result: an empty library that means "nothing there" and also means "could not read the folder".
 - **Fallbacks that lie:** code that retries, substitutes or degrades without saying so, when the user would have chosen differently had they known.
 - **Screens that look alive but are dead:** a button that calls a method on an object that no longer works, a state that is never updated after a failure, a loading indicator that never ends because the failure path skips the line that clears it, a connection that failed once and is never retried while the screen stays open.
+- **State that dies with its view:** when an error, a warning or unsaved work lives in a component, list every way that component goes away (switching tab, navigating home, closing a panel, a route change) and check that each one keeps it or reports it.
 - **Work that never completes:** a future, promise or callback that is set on the success path and forgotten on the failure path; a coroutine scope with no exception handler, where one failed write stops everything after it.
 - **Cancellation mistaken for failure:** cleanup or a user action that interrupts work and is then logged, reported or retried as if something had broken.
 - **Errors at the edges:** storage full or corrupt, a permission revoked, a file moved, a provider returning nothing, a second window holding a lock. Check what the code does on each, and whether a person could tell that path from the normal one.
@@ -64,11 +65,11 @@ Look for places where a type, a key or a value admits a state the code around it
 
 ## 5. Verify before reporting
 
-The trial that shaped this skill found that about a third of what a reviewer first writes down is noise: hypothetical exceptions, design preferences dressed as bugs, severities inflated to be noticed. Every candidate goes through this before it reaches the report.
+The trial that shaped this skill found that about a third of what a reviewer first writes down is noise: hypothetical exceptions, design preferences dressed as bugs, severities inflated to be noticed. After this step the rate can fall to none; that is what it is for. Every candidate goes through this before it reaches the report.
 
 1. **Write the scenario** in one or two sentences: the trigger (input or state), the path (file and lines the code takes), the result (what the user or the data ends up with). No scenario, no finding: it goes to "Possible" with the reason it could not be pinned down, or it is dropped.
 2. **Look for the guard** upstream and downstream. A caller that checks the value, a test that pins the case, a platform that cannot produce that input. If the guard exists, drop the finding. If it exists but is fragile, say so in the finding instead of pretending the bug is live today.
-3. **Say how it was verified:** `traced` when the path was followed by reading the code end to end; `read` when the pattern is there but the trigger was not followed to a concrete input; `would need running` when only the app can tell. The user decides how much weight to give each.
+3. **Say how it was verified:** `traced` when the path was followed by reading the code end to end; `read` when the pattern is there but the trigger was not followed to a concrete input; `would need running` when only the app can tell, saying what would settle it and where: a test the project can run, or a device or account only the user has. The user decides how much weight to give each.
 4. **One finding per root cause.** Five symptoms of one missing error handler are one finding with five effects, not five findings.
 5. **Drop what is not a defect:** missing tests (that is a different task), style, naming, a type that could be richer without any state it currently lets through, an exception a platform declares but does not produce in practice unless the handling path would lose data, and anything the project already records as known.
 
@@ -95,7 +96,7 @@ Uncommitted changes present and not reviewed. (only if there are any)
 ## Findings
 1. **<Critical | Important | Minor>** · `<file>:<line>` · <one-line title>
    Scenario: <trigger → path → result>
-   Verified: traced | read | would need running
+   Verified: traced | read | would need running — <what would settle it, and where>
    Fix (not applied): <one line, or "none obvious">
 
 ## Possible

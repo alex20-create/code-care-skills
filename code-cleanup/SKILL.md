@@ -147,7 +147,7 @@ Level 3 is not applied, but it has to be usable for fixing things later. Each fi
   If more than two bugs met in passing come out critical, either the project is in real trouble or the bar has slipped: say which in one sentence under the list.
 - **Fix risk:** safe, needs the tests, or needs a manual check in the app. A secret's fix risk is always "manual, outside the repository": the key is rotated where it was issued. Size and how it was checked do not apply to a secret: write "n/a" and say where it was found (file, or commit and path).
 - **Size:** XS (under 10 lines), S (10 to 40), M (40 to 150), L (over 150).
-- **File and lines, and how it was checked:** `traced` (the path was followed by reading the code end to end), `read` (the pattern is there but the trigger was not followed to a concrete input) or `would need running` (only the app can tell).
+- **File and lines, and how it was checked:** `traced` (the path was followed by reading the code end to end), `read` (the pattern is there but the trigger was not followed to a concrete input) or `would need running` (only the app can tell; say what would settle it and where: a test the project can run, or a device or account only the user has).
 
 A cleanup is not a bug hunt: the bugs here are the ones met on the way. Each still has to earn its place (secrets and items with no defect behind them need none of this):
 - **A failure scenario** in one or two sentences: the trigger (input or state), the path the code takes (file and lines), the wrong result. If that sentence cannot be written, it goes under "Uncertain findings" in the report with the reason, not into the level 3 list.

@@ -28,6 +28,7 @@ In apps built around an editor, **the editor layer is where it fails**, and **gr
 - **Selection timing.** A click and a keystroke in the same millisecond read the old caret, because the view takes in a mouse selection on the browser's own schedule. Code that reads the selection right after a programmatic focus or click, or a flow that types right after clicking, is suspect.
 - **Rebuilding the view when the data saves.** An autosave that destroys and recreates the editor loses everything typed after the save started, and is invisible to tests that type without pausing.
 - **Ids minted inside keymaps and commands.** Enter, Mod-Enter and paste handlers that create records must produce ids that cannot collide with existing ones and must not mint a record per keystroke.
+- **Whitespace in the schema.** A node whose text can hold a line break needs `whitespace: 'pre'` (or `code: true`) in its spec; without it, any DOM re-read after an edit turns each break into a space. Compare each node's spec with the CSS `white-space` it is drawn with: `pre-wrap` on screen and normal whitespace in the model is the mismatch.
 
 ## Dexie and IndexedDB
 
