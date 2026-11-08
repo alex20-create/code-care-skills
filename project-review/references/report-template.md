@@ -2,7 +2,7 @@
 
 Structure of `.review/report.md`. Write it in the user's language, translating the headings too. It is a local working note excluded from git, so a rule that what goes into a repository is written in English does not cover it, unless a `CLAUDE.md` names it.
 
-It is written in two moments:
+It is written in four moments:
 
 - **Step 1**, with the map: the summary lines, "Areas" with every area not reached, "Already known", and any secret found in the history under "Findings", as area "none".
 - **Step 4**, after each area: that area's row, its findings, possible issues, contracts and what held up.
