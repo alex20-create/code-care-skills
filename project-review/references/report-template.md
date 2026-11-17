@@ -2,11 +2,12 @@
 
 Structure of `.review/report.md`. Write it in the user's language, translating the headings too. It is a local working note excluded from git, so a rule that what goes into a repository is written in English does not cover it, unless a `CLAUDE.md` names it.
 
-It is written in four moments:
+It is written in five moments:
 
 - **Step 1**, with the map: the summary lines, "Areas" with every area not reached, "Already known", and any secret found in the history under "Findings", as area "none".
 - **Step 4**, after each area: that area's row, its findings, possible issues, contracts and what held up.
-- **When a fix lands**, on resuming or when the user says so: that finding's status. The finding itself stays as it was written.
+- **Step 5**, at the decision stop: each finding's status before any fix (decided for a branch, deferred, dropped), and the recommended order.
+- **When a fix lands**, on resuming or when the user says so: that finding's status. The finding itself stays as it was written. A fix branch run by `branch-ship` cites the finding numbers but never writes here.
 - **When the review closes**, if the user wants it closed: the closing section.
 
 ```markdown
@@ -28,7 +29,8 @@ Most severe first. A finding keeps its number once given, even when a later one 
    Scenario: <trigger → path → result>
    Verified: traced | read | would need running — <what would settle it, and where: a test the project can run, or a device only the user has>
    Fix (not applied): <one line, or "none obvious">
-   Status (once fixes land): fixed in <PR or commit> | fixed in <commit>, to be confirmed (until a new pass of its area confirms it) | pending — <deferred, not reproducible, not worth it, undecided>
+   Status (at the decision stop, before a fix lands): decided for branch <N> | deferred — <why> | dropped — <why> | undecided
+   Status (once a fix lands): fixed in <PR or commit> | fixed in <commit>, to be confirmed (until a new pass of its area confirms it) | pending — <not reproducible, not worth it after all>
 
 ## Possible
 - `<file>:<line>` · <what looks wrong and why it could not be pinned down>
@@ -44,7 +46,7 @@ Most severe first. A finding keeps its number once given, even when a later one 
 - <area #>: <two or three lines on what was checked and held up>
 
 ## Recommended order
-Numbered fix branches, each one root cause or one area, most severe first, each with the files it touches. Then which branches can run side by side (no shared files) and what they still share. Each is separate work, checked with `branch-review` before merging.
+Numbered fix branches, each one root cause or one area, most severe first, each with the files it touches and the numbers of the findings decided for it. Then which branches can run side by side (no shared files) and what they still share. Each is separate work, run through `branch-ship` (or checked with `branch-review` before merging, without it).
 
 ## Closing
 Closed at <commit> · areas not reviewed: <list, or none> · code the fixes changed since each area's commit: <areas, with lines changed>; those areas are stale for a new pass
