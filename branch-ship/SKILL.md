@@ -112,7 +112,7 @@ Note where the cleanup starts (`git rev-parse HEAD`) at the top of `cleanup.md`,
 1. Find the project's real checks, fast and slow, the way the siblings do: `CLAUDE.md`, the project's scripts, the CI configuration. Join them into one command, for example `npm test && npx playwright test`.
 2. Before slow end-to-end tests, ask whether a development server is open. Many test runners reuse a server already on their port and would test that instead of the branch.
 3. `gate stamp checks "<command>"`. It refuses to run on uncommitted changes, records nothing if HEAD moves meanwhile, prints the last lines and keeps the full output in `checks.log`.
-4. If it fails, the branch is not ready. Read the failure in `checks.log`, tell the user which check failed and at which commit, and stop. A test that fails once and passes on a second run is flaky: say so and run the checks again. A fix for a real failure is a new commit after the cleanup, which the gate will list. Offer `branch-cleanup` over it if it is more than a few lines, then run the checks again.
+4. If it fails, the branch is not ready. Read the failure in `checks.log`, tell the user which check failed and at which commit, and stop. A test that fails once and passes on a second run is flaky: say so and run the checks again. A fix for a real failure is a new commit after the cleanup, which the gate will list. If it is more than a few lines, offer `branch-cleanup` over it and stamp it as in step 5. If it is a few lines, offer to skip the cleanup for it. On a yes, run `gate stamp cleanup --skipped "fix after the checks, <n> lines"`, so the record covers the new tip, and add the line to `cleanup.md`. Then run the checks again.
 
 ## 7. Pull request body, then ask
 
