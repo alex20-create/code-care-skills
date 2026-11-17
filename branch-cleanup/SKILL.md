@@ -132,6 +132,7 @@ Between blocks, one line per finished block is enough.
    ```
 
 4. Tell the user what is left to them: reviewing the commits (`git log <start>..HEAD`), opening the pull request, merging. Do none of it yourself.
+5. This cleanup is the third step of a fixed order for a branch: `branch-review`, then the fixes it led to, then this cleanup, then the full suite and the pull request. When `branch-ship` invoked this skill, hand the `## Cleanup` section and the starting commit back to it and stop. If the branch keeps a code-care record (a stamp per step inside `.git`, which a push gate may read), the stamp for this cleanup is the caller's, `branch-ship` or the user, made with the starting commit from step 1. This skill commits its blocks but writes no stamp.
 
 ## If the user leaves halfway
 

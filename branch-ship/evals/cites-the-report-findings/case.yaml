@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: cites-the-report-findings
+expected_outcome: |
+  The journal app on main has a project-review report in .review/report.md whose decision stop put findings 1 (a failed save reported as saved, critical) and 3 (a cut text one character too long, minor) in fix branch 1, fix/save-and-shorten, and deferred finding 2 (CSV without quoting). The user asks for fix branch 1 from the report, answers ahead that anything new the branch review finds is deferred and that the cleanup can be skipped if the branch is small, and says not to push yet. The skill reads the report without writing to it and creates fix/save-and-shorten from main. It records the report and the two findings in source.md, fixes finding 1 and then finding 3, each in its own commit with a test that failed before the fix, each stamped as report-1 and report-3. It runs branch-review over the branch and stamps it, records any new finding as deferred, skips the cleanup with a stamped reason, and runs the checks through stamp checks. It writes pr.md whose "## Fixes" cites report findings 1 and 3 by number with their commits and the report's path. src/export/csv.js and the report are untouched, and nothing is pushed or merged.
+context:
+  scaffold_script: make-repo.sh

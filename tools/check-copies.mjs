@@ -6,6 +6,7 @@ import { readFileSync } from "node:fs";
 
 const SHARED = [
   ["branch-review/references/web-stack.md", "project-review/references/web-stack.md"],
+  ["branch-ship-hook/code_care_gate.py", "branch-ship/scripts/code_care_gate.py"],
 ];
 
 const read = (path) => readFileSync(path, "utf8").replace(/\r\n/g, "\n");

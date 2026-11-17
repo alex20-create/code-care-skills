@@ -125,6 +125,8 @@ Then a section to paste into the pull request description, in the language the p
 
 Close with what is left to the user: reading the findings, deciding which to fix, and how (a fix commit on this branch, a follow-up, or nothing). Do none of it yourself.
 
+This review is the first step of a fixed order for a branch: review, a decision per finding, one fix commit per finding with its test, `branch-cleanup`, the full suite, then the pull request. When `branch-ship` invoked this skill, hand the report back to it and stop. If the branch keeps a code-care record (a stamp per step inside `.git`, which a push gate may read), the stamp for this review is the caller's: `branch-ship`, `code-cleanup` or the user. This skill writes nothing, not even the stamp.
+
 ## If the user asks for fixes
 
 Fixing is a separate task with separate risks, which is why this skill does not do it even when asked in the same breath. Say so in one sentence, leave the report as it is, and offer the way forward: the user applies the fixes themselves or asks for them as a normal task, one finding at a time, with the tests run after each; `branch-cleanup` is the sibling for tidying the same scope, not for fixing logic.

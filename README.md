@@ -1,6 +1,6 @@
 # code-care-skills
 
-`code-cleanup`, `branch-cleanup`, `project-review` and `branch-review`: four guided, safe skills for [Claude Code](https://claude.com/claude-code), written for people who can follow commands but would rather not diagnose a broken build. Two of them clean; two review. They share the same safety rules and differ in scope and in what they are allowed to touch.
+`code-cleanup`, `branch-cleanup`, `project-review`, `branch-review` and `branch-ship`: five guided, safe skills for [Claude Code](https://claude.com/claude-code), written for people who can follow commands but would rather not diagnose a broken build. Two of them clean and two review. The fifth, `branch-ship`, takes one branch through review, fixes, cleanup and checks in that order, and keeps a record of each step. They share the same safety rules and differ in scope and in what they are allowed to touch.
 
 ## Which one to use
 
@@ -14,6 +14,14 @@
 | Starting point | Baseline of every check, saved to a file | Asks whether the checks passed at HEAD; runs them once if not | A map of the project's areas, ranked by risk | Nothing to run: it reads the diff and the code around it |
 
 If you are unsure, two questions decide it. Do you want to find what is wrong, or tidy what is untidy? The first is a review, the second a cleanup. And is it about the whole project or one branch? When you want both a review and a cleanup, review first: the fixes are new code the cleanup should see. Each skill's description points at the others, so Claude picks the right one from how you phrase the request.
+
+## The flow at two scales
+
+**One branch.** `branch-ship` runs the steps in order: `branch-review`, a stop where you decide each finding, one fix commit per finding with a test that fails before and passes after, `branch-cleanup` (or a recorded skip for a small fix branch), the full suite, and a pull request body with `## Review`, `## Fixes` and `## Cleanup`. It asks before pushing and never merges. Each step is stamped in a per-branch record inside `.git` (see `branch-ship-hook/`), so a new session picks up where the last one stopped. The optional push gate reads the same record and asks before a push that skipped a step.
+
+**A whole project.** No extra director. `project-review`'s report is the record: it maps the project, reviews it area by area, then stops so you can decide each finding (decided for fix branch N, deferred, dropped) and writes a brief per fix branch. Each fix branch then goes through `branch-ship`, which takes its findings by number from the report and cites them in the pull request, without writing to the report. `code-cleanup` closes, once the fixes are in, on a cleanup branch that is stamped cleanup first and review after. Its Phase 0 warns about critical or important findings in the report that nobody has decided yet.
+
+The skills that only review or only tidy stay as they were: `branch-review` writes nothing, not even a stamp, and `branch-cleanup` commits its blocks but leaves the stamp to whoever called it.
 
 ## code-cleanup in short
 
@@ -49,6 +57,10 @@ Apply block 1?
 | `project-review/references/web-stack.md` | A copy of `branch-review`'s stack reference: each skill installs on its own, so each carries its own copy |
 | `project-review/evals/` | Four test cases: finds a migration that writes an empty library over the user's data and an old `.env` in the history, skips defects the project already records, reviews only the riskiest area and stays read-only when asked to fix, resumes a review after a fix landed |
 | `tools/check-copies.mjs` | Checks that the files two skills share have not drifted apart: `node tools/check-copies.mjs` |
+| `branch-ship/SKILL.md` | The skill: open the branch's record, run `branch-review`, stop for a decision per finding, fix each in its own commit with a test, run `branch-cleanup` or record a skip, run the full suite through the record, write the pull request body, ask before pushing; also builds a fix branch from findings in a `project-review` report, and resumes from the record |
+| `branch-ship/scripts/code_care_gate.py` | A copy of the record script from `branch-ship-hook/`, so the skill installs on its own; `tools/check-copies.mjs` keeps the two identical |
+| `branch-ship/evals/` | Four test cases: stops for a decision after the review and fixes nothing, does not push without a yes, resumes from the record and runs the checks instead of recording them on the user's word, builds a fix branch from a report and cites its finding numbers |
+| `branch-ship-hook/` | A record of each branch's review, fixes, cleanup and checks inside `.git`, and a Claude Code `PreToolUse` hook that reads it before every `git push` and asks when a step is missing. Not part of any packaged skill; see its README to install it |
 | `branch-review/SKILL.md` | The skill: fix the scope from the branch's diff, read enough to judge, two lenses (silent failures, type design), verify every candidate, report with severities and a pull request section |
 | `branch-review/references/web-stack.md` | Failure patterns and checks for React, TypeScript, ProseMirror, Dexie, Vitest and Playwright, read only when `package.json` names one of them |
 | `branch-review/evals/` | Three test cases: finds a swallowed error and a colliding id while leaving old code alone, ignores decoys that look like defects, stays read-only when asked to fix on the spot |
@@ -62,9 +74,10 @@ cp -r code-cleanup ~/.claude/skills/code-cleanup
 cp -r branch-cleanup ~/.claude/skills/branch-cleanup
 cp -r project-review ~/.claude/skills/project-review
 cp -r branch-review ~/.claude/skills/branch-review
+cp -r branch-ship ~/.claude/skills/branch-ship
 ```
 
-Then ask Claude to clean up a project or a folder (or run `/code-cleanup`), to tidy the branch before a pull request (or run `/branch-cleanup`), to look for bugs in the whole project (or run `/project-review`), or to look for bugs in the branch before the pull request (or run `/branch-review`). The inventory script of `code-cleanup` needs Node.js; without it the skill falls back to looking at the skill folders by hand. The other three need nothing but git, and `project-review` works without it too, with no history to rank by. None of the `evals/` folders are needed to use the skills.
+Then ask Claude to clean up a project or a folder (or run `/code-cleanup`), to tidy the branch before a pull request (or run `/branch-cleanup`), to look for bugs in the whole project (or run `/project-review`), to look for bugs in the branch before the pull request (or run `/branch-review`), or to take the branch all the way to a pull request (or run `/branch-ship`). `branch-ship` needs Python 3 for its record script and calls `branch-review` and `branch-cleanup`, so install those too. The push gate is optional and installed apart (`branch-ship-hook/README.md`). The inventory script of `code-cleanup` needs Node.js; without it the skill falls back to looking at the skill folders by hand. `branch-cleanup`, `branch-review` and `project-review` need nothing but git, and `project-review` works without it too, with no history to rank by. None of the `evals/` folders are needed to use the skills.
 
 ## How code-cleanup works
 
@@ -120,13 +133,25 @@ Its `evals/` folder holds three cases. One plants a swallowed parse error and a 
 
 **Coverage is part of the report.** Every area is marked reviewed at a given commit, skipped or not reached, so a short list of findings over three areas of twelve reads as exactly that. When you come back in a new session, areas that changed since their pass are marked stale and go back into the ranking.
 
-**Read only, except its own report.** It edits nothing, commits nothing and runs neither the tests nor the app. The report goes in `.review/report.md`, excluded from git through `.git/info/exclude`, only if you agree; `allowed-tools` leaves out the write tools so that both writes ask for permission. It closes with the findings grouped into fix branches in order, each to be checked with `branch-review` before merging, and `code-cleanup` once the fixes are in.
+**Read only, except its own report.** It edits nothing, commits nothing and runs neither the tests nor the app. The report goes in `.review/report.md`, excluded from git through `.git/info/exclude`, only if you agree; `allowed-tools` leaves out the write tools so that both writes ask for permission. It closes with the findings grouped into fix branches in order. Then it stops so you can decide each finding, records the decision in the finding's `Status`, and writes a brief for each fix branch to run through `branch-ship`. `code-cleanup` comes once the fixes are in.
 
 Its `evals/` folder holds four cases. One plants a migration that crashes on old notes without tags inside a loader that swallows the error and saves an empty library over the data, an old `.env` in the history, and untidy but harmless code, and checks that the data loss and the secret are reported and the untidiness is not. One plants two defects the project already records (in `CLAUDE.md` and in a cleanup report) and one it does not, a store that returns `undefined` where its caller checks for `null`, and checks that only the new one is reported. One asks for the riskiest area only and for a fix on the spot, and checks that the storage area is chosen, the other areas are named as not reviewed, and nothing is edited. One resumes from an earlier report after a fix for its finding was merged, and checks that the changed area is marked stale and the unchanged one kept, the finding is treated as fixed and still to be confirmed, the plan and its cost are given again before any new area is read, and nothing is written before the go-ahead.
 
+## How branch-ship works
+
+**A director, not a reviewer.** It invokes `branch-review` and `branch-cleanup` for real and does none of their work itself. What it adds is the order, the stops and the record. The order is review, decisions, fixes, cleanup, checks, pull request body, with a question before the push.
+
+**The stop after the review.** Every finding goes into one table with a recommended decision: fix now, measure first (only for a finding that "would need running"), defer or drop. Nothing is fixed until you answer. Each fix is one commit holding the fix and a test that was seen to fail before it and pass after. A second review is offered only when the fixes add up to more than about 100 lines, with its price.
+
+**The record.** `scripts/code_care_gate.py` stamps each step at the commit it covered: the review, each fix with its finding number, the cleanup's range or the reason it was skipped, and the checks. `stamp checks` runs the command itself and keeps its output, so a check is recorded only when it ran, at the commit it ran on. The record and the skill's own files (the saved review with your decisions, the cleanup section, the pull request body) live in the branch's folder inside `.git`, so they never reach a commit. A new session reads the record and goes on from the first step not done.
+
+**From a project report.** Given findings by number from `project-review`'s report, it creates the fix branch, fixes those findings first (they were decided at the report's own stop), then reviews the branch and carries on as usual. The pull request's `## Fixes` cites each report finding by number. The report itself is never written: marking findings as fixed is `project-review`'s job when it resumes.
+
+Its `evals/` folder holds four cases. One asks for a branch to be taken to the pull request in a hurry, and checks that the review is run and stamped, its findings are saved, and the skill stops at the decision table with nothing fixed. One resumes a branch with everything but the checks, and checks that the checks run through the record, the pull request body marks each finding with its fate, and nothing is pushed without a yes. One resumes a branch whose cleanup broke a test, with a user who says the tests passed that morning, and checks that the checks are run, fail at the tip and are reported, and that no pass is recorded. One builds fix branch 1 from a `project-review` report, and checks one commit per finding with its test, stamps and a pull request body that cite the finding numbers, the deferred finding untouched and the report unchanged.
+
 ## Rules they do not bend
 
-A project's `CLAUDE.md` governs conventions such as branch names, commit language and how tests are run. It cannot lower the safety rules: no `merge`, `push`, `rebase`, `reset --hard` or `stash`, no behaviour change, no `--no-verify`, nothing downloaded and run without asking, no AI signatures in commits. `code-cleanup` also never touches your starting branch, since all its work happens on a new one; `branch-cleanup` works on the branch under review and never leaves it; `branch-review` edits nothing at all, and `project-review` writes only its own report, after asking.
+A project's `CLAUDE.md` governs conventions such as branch names, commit language and how tests are run. It cannot lower the safety rules: no `merge`, `rebase`, `reset --hard` or `stash`, no `push` (except `branch-ship`'s, after you say yes to that push), no behaviour change outside a fix you decided, no `--no-verify`, nothing downloaded and run without asking, no AI signatures in commits. `code-cleanup` also never touches your starting branch, since all its work happens on a new one. `branch-cleanup` and `branch-ship` work on the branch under review and never leave it, except for `branch-ship` creating a fix branch from a report. `branch-review` edits nothing at all, and `project-review` writes only its own report, after asking.
 
 ## Large projects
 
@@ -141,6 +166,8 @@ The cost depends mostly on the size of the project or diff, the number of blocks
 `branch-review` was measured on its three eval cases, diffs of 25 to 51 lines, one run each with and without the skill on the same model: about 104k tokens and 97 seconds per review with the skill against 98k and 91 seconds without, so the skill itself costs about 6 percent on a small diff. Without it the model found the same planted defects but rated only some of them, listed missing tests as findings, and, when asked to fix on the spot, edited the repository; with it, every finding carried a severity and a scenario and nothing was edited. The skill is about 4k tokens and `references/web-stack.md` another 2k when it applies.
 
 `project-review` was measured on its three eval cases on 2026-11-06, projects of 20 to 50 lines, one run each with and without the skill on the same model: about 104k tokens and 100 seconds per run with the skill against 94k and 72 seconds without, about 11 percent more. With the skill every criterion passed (16 of 16); without it, 10 of 16. The model found every planted defect either way. What only the skill did: flag the `.env` still in the history (without it the model said there were no secrets), keep cleanup items and missing tests out of the findings, give every finding a severity and say how it was checked, and, asked to fix on the spot, stay read only and hand back a fix branch instead of editing the code. The fixtures are small enough to cover in one pass, so the map and the ranking were barely tested; re-measure on a real project before trusting these figures for one. The skill is about 4k tokens.
+
+`branch-ship` was measured on its four eval cases on 2026-11-17, diffs of 10 to 25 lines, one run each with the skill and none without, since without it there is no record to resume or stamp. It took 109k to 125k tokens per run (115k, 109k, 109k, 125k) and 65 to 185 seconds. The two runs that invoked `branch-review` were the dearest, and the one that also made two fix commits took the longest. Every criterion passed (21 of 21). None of the cases ran `branch-cleanup` (two skipped it as small fix branches, two resumed after it) or a second review, so a full run with both on a real branch will cost more. The skill is about 4.5k tokens.
 
 ## Licence
 
