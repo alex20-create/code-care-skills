@@ -49,6 +49,7 @@ Apply block 1?
 | `project-review/references/web-stack.md` | A copy of `branch-review`'s stack reference: each skill installs on its own, so each carries its own copy |
 | `project-review/evals/` | Four test cases: finds a migration that writes an empty library over the user's data and an old `.env` in the history, skips defects the project already records, reviews only the riskiest area and stays read-only when asked to fix, resumes a review after a fix landed |
 | `tools/check-copies.mjs` | Checks that the files two skills share have not drifted apart: `node tools/check-copies.mjs` |
+| `branch-ship-hook/` | A record of each branch's review, fixes, cleanup and checks inside `.git`, and a Claude Code `PreToolUse` hook that reads it before every `git push` and asks when a step is missing. Not part of any packaged skill; see its README to install it |
 | `branch-review/SKILL.md` | The skill: fix the scope from the branch's diff, read enough to judge, two lenses (silent failures, type design), verify every candidate, report with severities and a pull request section |
 | `branch-review/references/web-stack.md` | Failure patterns and checks for React, TypeScript, ProseMirror, Dexie, Vitest and Playwright, read only when `package.json` names one of them |
 | `branch-review/evals/` | Three test cases: finds a swallowed error and a colliding id while leaving old code alone, ignores decoys that look like defects, stays read-only when asked to fix on the spot |
