@@ -311,8 +311,18 @@ def status(args):
         checks = state["checks"]
         print("  checks:  %s" % ("%s at %s (%s)" % (checks["result"], short(checks["sha"]), checks["command"])
                                 if checks else "-"))
+    # Say what the gate would do with a push of this branch, by the same rules gate() applies.
+    if branch == default_branch(repo):
+        print("  push:    not gated (default branch)")
+        return
     problems = evaluate(repo, branch, tip)
-    print("  push:    " + ("complete" if not problems else "would ask: " + "; ".join(problems)))
+    _, mode = git(repo, "config", "--get", "code-care.gate")
+    if mode not in ("ask", "deny"):
+        print("  push:    not gated (code-care.gate is off in this clone); record "
+              + ("complete" if not problems else "missing: " + "; ".join(problems)))
+        return
+    verb = "would refuse: " if mode == "deny" else "would ask: "
+    print("  push:    " + ("complete" if not problems else verb + "; ".join(problems)))
 
 
 def show_dir(args):
