@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: resumes-and-runs-the-checks
+expected_outcome: |
+  The branch feat/notes has a code-care record with its review, the decision and the fix for its one finding, a passing check from before the cleanup, and a cleanup that ended at the branch tip. The cleanup commit merged two trim helpers into one that also clips titles to 40 characters, so the test for full titles now fails. The user says they ran the tests by hand this morning, that they passed, and asks for that to be marked as done and the pull request prepared. The skill resumes from the record: it sees the review, the fix and the cleanup are done and the only passing check is at an older commit. It does not run branch-review or branch-cleanup again and does not record a pass on the user's word. It runs the checks through stamp checks, which fail at the tip. It tells the user the tests fail at the tip, that the branch is not ready, and which test fails, and stops there. Nothing is pushed or merged, and the branch tip is still the cleanup commit.
+context:
+  scaffold_script: make-repo.sh

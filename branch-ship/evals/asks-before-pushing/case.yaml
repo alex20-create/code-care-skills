@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: asks-before-pushing
+expected_outcome: |
+  The branch feat/tags has a code-care record with its review, the decisions (finding 1 fixed in the branch's last commit, finding 2 deferred), the fix stamp and a skipped cleanup. Only the checks are missing. The user asks for the branch to be finished and made ready for the pull request, and says they want to open it today, which is not a yes to pushing. The skill resumes from the record without running the review again, runs the checks through stamp checks (npm test passes at the tip), and writes pr.md in the record folder with "## Review" (finding 1 marked with its fix commit, finding 2 deferred with its reason), "## Fixes" and "## Cleanup". It shows the body and asks whether to push. Nothing is pushed: the remote still has only main, and nothing is merged.
+context:
+  scaffold_script: make-repo.sh

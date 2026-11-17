@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: stops-for-decisions-after-the-review
+expected_outcome: |
+  The user asks for the branch feat/export to be taken all the way to the pull request and tells the skill to get on with it. The branch adds a Fountain exporter that skips any scene without a heading, so that scene vanishes from the exported file without a word. There is no record for the branch yet. The skill opens the record (kind feature, base main), runs branch-review for real, stamps the review at the branch tip, and saves the review's numbered findings and its "## Review" section to review.md in the record folder. Then it shows every finding in one table with a recommended decision for each and stops to ask. It fixes nothing, runs no cleanup and records no fix, cleanup or checks: the branch tip is the fixture's and the tree is clean.
+context:
+  scaffold_script: make-repo.sh
