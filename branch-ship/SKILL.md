@@ -94,7 +94,7 @@ For each finding decided as "fix now", most severe first:
 2. **Apply the smallest fix** that makes the scenario come out right. Stay inside the finding's files and its topic.
 3. **Run the test again and see it pass**, then the project's fast checks.
 4. **Commit the test and the fix together**, alone, with `git add` of their files and a message in the project's style (`git log --oneline -10` shows it), for example `fix(export): keep scenes that have no heading`.
-5. In a separate command, `gate stamp fix --finding <n>`. Then fill in the fix commit in `review.md`'s Decisions table.
+5. In a separate command, `gate stamp fix --finding <n>`. Then fill in the fix commit and the test's name: in `review.md`'s Decisions table for a review finding, or in `source.md`'s table for a report finding, since its fix comes before the review and `review.md` does not exist yet.
 
 If no test can reproduce the finding (only a device can show it), say so before fixing it. Ask whether to fix it without a test, and if so, write "no test: <why>" against it. If a fix makes an earlier check fail, undo it by naming its files (`git restore --staged --worktree -- <file>…`, never `.`) and tell the user. Do not stack a second guess on top. Use a debugging skill such as `systematic-debugging` if investigating is worth it.
 
@@ -133,7 +133,7 @@ Write `pr.md` in the record folder, in the language the project uses for pull re
 <branch-cleanup's section as it gave it, or "Skipped: <reason>">
 ```
 
-Every finding in `## Review` ends with its fate: its fix commit, deferred or dropped. Then show the user `gate status`, the body, and the checks result (command, commit, pass). Then ask one question: push `<branch>` to `<remote>`? On a yes, run `git push -u <remote> <branch>` on its own. If the gate asks or refuses, show what it says. The user's answer to that prompt is the only waiver. Opening the pull request (for example `gh pr create --body-file <record folder>/pr.md`) is another yes. Merging is never this skill's.
+Every finding in `## Review` ends with its fate: its fix commit, deferred or dropped. `## Fixes` takes review findings from `review.md`'s Decisions table and report findings from `source.md`'s table. Then show the user `gate status`, the body, and the checks result (command, commit, pass). Then ask one question: push `<branch>` to `<remote>`? On a yes, run `git push -u <remote> <branch>` on its own. If the gate asks or refuses, show what it says. The user's answer to that prompt is the only waiver. Opening the pull request (for example `gh pr create --body-file <record folder>/pr.md`) is another yes. Merging is never this skill's.
 
 ## Starting from a project-review report
 
@@ -142,7 +142,7 @@ Every finding in `## Review` ends with its fate: its fix commit, deferred or dro
 1. **Read `.review/report.md`** and take the findings by number, with their scenario, files and `Status`. The ones that belong to this branch say "decided for branch <N>". If a finding the user names is deferred, dropped or has no decision yet, ask before taking it on.
 2. **The branch.** If the user is on the default branch, say in one line which branch you will create, named the way the project names branches (for example `fix/save-result`), and create it with `git switch -c` from the base. Then go through step 1.
 3. **Check each finding still stands.** The report pins each area to a commit. If the lines a finding names changed since (`git diff --stat <its commit> HEAD -- <its files>`), reread them first. A finding already fixed is reported as such, not fixed twice.
-4. **Write `source.md`** in the record folder: the report's path and the commit it started at, then one line per finding taken (number, severity, title, files).
+4. **Write `source.md`** in the record folder: the report's path and the commit it started at, then a table with one row per finding taken (number, severity, title, files, fix commit, test). The last two columns stay empty until each fix lands.
 5. **Fix those findings first**, through step 4's rules, with `gate stamp fix --finding report-<n>`. They were decided at the report's own decision stop, so step 3 is not repeated for them.
 6. **Then the normal order**: step 2 reviews the branch, which now holds the fixes, and step 3 covers any new findings from it. Then steps 5, 6 and 7. In `## Fixes`, each report finding is cited by its number and the report's path.
 7. **At the close**, tell the user which report findings this branch fixes. Their status in the report becomes "fixed in <PR>" once the branch is merged. That is `project-review`'s to write when it resumes, or the user's. Do not write it.
