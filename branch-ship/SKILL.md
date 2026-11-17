@@ -151,6 +151,7 @@ Every finding in `## Review` ends with its fate: its fix commit, deferred or dro
 
 The record says how far the branch got. Read `gate status` and the files in `gate dir`, check that the tree is clean and the branch is the same one, and continue at the first step not done:
 
+- **A `source.md` whose findings are not all stamped:** compare its findings with the `fix` lines of the record (`report-<n>`). Fix each one still missing through step 4's rules before anything else. The review comes after the report's fixes, so a missing review does not mean those fixes are done, and the push gate does not check fixes.
 - **No review recorded**, or one that is no longer part of the branch: step 2.
 - **A review, but no `## Decisions` in `review.md`:** show the table again from `review.md` (do not rerun the review) and stop for the decisions.
 - **Decisions with "fix now" findings that have no fix stamp:** step 4 for those. A commit after the review that looks like one of those fixes but has no stamp means the step's test was never seen to fail. Ask the user before trusting it. Never stamp it on the commit's word.
